@@ -1,9 +1,9 @@
 from django.db import models
-from django.contrib.auth.models import BaseUserManager , AbstractBaseUser , AbstractUser ,User
+from django.contrib.auth.models import BaseUserManager , AbstractBaseUser , AbstractUser 
 # Create your models here.
 class CustomeUserManager(BaseUserManager)  :
-
-    def create_user(self,username,email,password=None)  :
+    use_in_migrations = True
+    def create_user(self,username,email,password=None, **extra_fields)  :
         if not username  :
             raise ValueError('user must have email')
         if not email : 
@@ -15,11 +15,14 @@ class CustomeUserManager(BaseUserManager)  :
         user.set_password(password)
         user.save(using=self._db)
         return user
-    def create_superuser(self,username,email,password)  :
-        superuser=self.create_user(username=username,email=email,password=password)
+    def create_superuser(self,username,email,password=None, **extra_fields)  :
+
+        superuser=self.create_user(username=username,email=self.normalize_email(email),password=password)
         superuser.is_admin=True
         superuser.is_staff=True
-        superuser.is_superuser=True
+        superuser.is_superadmin=True
+        superuser.is_active=True
+        superuser.save(using=self._db)
         return superuser
     
 
@@ -29,7 +32,8 @@ class CustomeUserManager(BaseUserManager)  :
 
 
 
-class CustomeUser(BaseUserManager):
+class CustomeUser(AbstractBaseUser):
+    use_in_migrations = True
     email = models.EmailField(verbose_name='email',unique=True,max_length=255) #required
     phone_number=models.CharField(max_length=12,verbose_name='phone number',blank=True)
     username=models.CharField(max_length=255,unique=True,verbose_name="user name") #required
@@ -45,7 +49,7 @@ class CustomeUser(BaseUserManager):
 
     is_active=models.BooleanField(default=True)
     is_admin=models.BooleanField(default=False)
-    is_superuser=models.BooleanField(default=False)
+    is_superadmin=models.BooleanField(default=False)
     is_staff=models.BooleanField(default=False)
 
     objects=CustomeUserManager()

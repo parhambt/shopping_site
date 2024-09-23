@@ -79,7 +79,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "shopping_site.wsgi.application"
-# AUTH_USER_MODEL="account.CustomeUser"
+AUTH_USER_MODEL ="account.CustomeUser"
 
 # ACCOUNT_AUTHENTICATION_METHOD = 'email'
 # Database
