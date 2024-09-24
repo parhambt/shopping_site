@@ -3,7 +3,8 @@ from django.http import HttpResponse
 from .forms import RegisterationForm
 from django.views import View
 from . models import CustomeUser
-from django.contrib import messages
+from django.contrib import messages , auth 
+
 # Create your views here.
 
 class Register(View):
@@ -38,14 +39,55 @@ class Register(View):
         return render(request,"account/register.html",context)
 
 
-class Login(View):
-    def get(self,request):
-        return render(request,"account/login.html")
-        
-    def post(self,request):
+    
+def login(request):
+    if request.method=="POST":
         email=request.POST.get('email')
-        password=request.POST.get('password')
+        password=request.POST.get('password')    
+        user=auth.authenticate(request=request,email=email,password=password)
+        if user  is not None  :
+            auth.login(request=request,user=user)
+            
+            # messages.success(request,"authentication is succseed")
+            return redirect("store_view")
+        else : 
+            messages.error(request,"Error : authentication is failed")
+            return redirect("login")
+    
+    elif request.method == "GET" : 
+        return render(request,"account/login.html")
 
-        pass
+
+      
 def logout(request):
-    pass
+    user=request.user
+    if user.is_authenticated  :
+        auth.logout(request)
+        messages.success(request,"you are succsesfully looged out")
+        return redirect("login")
+    else  :
+        pass
+
+
+
+
+
+# class Login(View):
+
+#     def get(self,request):
+#         return render(request,"account/login.html")
+        
+#     def post(self,request):
+#         email=request.POST.get('email')
+#         password=request.POST.get('password')
+
+#         user=auth.aauthenticate(email=email, password=password)
+#         if user  is not None  :
+#             auth.login(request=request,user=user)
+            
+#             # messages.success(request,"authentication is succseed")
+#             return redirect("store_view")
+#         else : 
+#             messages.error(request,"authentication is failed")
+#             return redirect("login")
+#         return render(request,"account/login.html")
