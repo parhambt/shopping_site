@@ -1,13 +1,11 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.shortcuts import render ,redirect
+from django.http import HttpResponse 
 from .forms import RegisterationForm
 from django.views import View
 from . models import CustomeUser
+from django.contrib import messages
 # Create your views here.
-def register(request):
-    form=RegisterationForm()
-    context={"form":form}
-    return render(request,"account/register.html",context)
+
 class Register(View):
     def post(self,request):
 
@@ -25,9 +23,9 @@ class Register(View):
             user.last_name=last_name
             user.phone_number=phone_number
             user.save()
-            print('valid')
+            messages.success(request,"registration is success")
             
-            return render(request,"account/register.html",context)
+            return redirect('register')
         else : 
             print(form.errors)
             
@@ -39,7 +37,15 @@ class Register(View):
         context={"form":form}
         return render(request,"account/register.html",context)
 
-def login(request):
-    return render(request,"account/login.html")
+
+class Login(View):
+    def get(self,request):
+        return render(request,"account/login.html")
+        
+    def post(self,request):
+        email=request.POST.get('email')
+        password=request.POST.get('password')
+
+        pass
 def logout(request):
     pass
