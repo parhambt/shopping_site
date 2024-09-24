@@ -3,7 +3,7 @@ from django.contrib.auth.models import BaseUserManager , AbstractBaseUser , Abst
 # Create your models here.
 class CustomeUserManager(BaseUserManager)  :
     use_in_migrations = True
-    def create_user(self,username,email,password=None, **extra_fields)  :
+    def create_user(self,username,email,password=None)  :
         if not username  :
             raise ValueError('user must have email')
         if not email : 
@@ -15,12 +15,12 @@ class CustomeUserManager(BaseUserManager)  :
         user.set_password(password)
         user.save(using=self._db)
         return user
-    def create_superuser(self,username,email,password=None, **extra_fields)  :
+    def create_superuser(self,username,email,password=None)  :
 
         superuser=self.create_user(username=username,email=self.normalize_email(email),password=password)
         superuser.is_admin=True
         superuser.is_staff=True
-        superuser.is_superadmin=True
+        superuser.is_superuser=True
         superuser.is_active=True
         superuser.save(using=self._db)
         return superuser
@@ -49,7 +49,7 @@ class CustomeUser(AbstractBaseUser):
 
     is_active=models.BooleanField(default=True)
     is_admin=models.BooleanField(default=False)
-    is_superadmin=models.BooleanField(default=False)
+    is_superuser=models.BooleanField(default=False)
     is_staff=models.BooleanField(default=False)
 
     objects=CustomeUserManager()
@@ -65,6 +65,8 @@ class CustomeUser(AbstractBaseUser):
 
     def has_module_perms(self,add_label):
         return True
+    class Meta : 
+        verbose_name="User"
 
 
 
