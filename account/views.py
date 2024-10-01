@@ -4,10 +4,22 @@ from .forms import RegisterationForm
 from django.views import View
 from . models import CustomeUser
 from django.contrib import messages , auth 
+# verification email
+from django.contrib.sites.shortcuts import get_current_site
+from django.template.loader import render_to_string
+from django.utils.http import urlsafe_base64_encode , urlsafe_base64_decode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator  
+from  django.core.mail import EmailMessage ,send_mail
 
-# Create your views here.
+
+def resend_verification(request):
+    pass
 
 class Register(View):
+    def send_verification(self,request,user) :
+         
+        pass
     def post(self,request):
 
         form=RegisterationForm(request.POST)
@@ -19,16 +31,35 @@ class Register(View):
             last_name=form.cleaned_data["last_name"]
             email=form.cleaned_data["email"]
             username=email.split("@")[0]
+
             user=CustomeUser.objects.create_user(username=username,email=email,password=password)
+
             user.first_name=first_name
             user.last_name=last_name
             user.phone_number=phone_number
+            
+            current_site=get_current_site(request)
+            mail_subject="Please activate your account"
+            mail_content=render_to_string("account/account_verification.html",{"user":user,
+            'domain':current_site,
+            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+            "token":default_token_generator.make_token(user),
+
+            
+            })
+            to_email=email
+            send_email=EmailMessage(mail_subject,mail_content, to=[to_email])
+            send_email.send()
             user.save()
-            messages.success(request,"registration is success")
+            messages.success(request,"Registration is success \n Please verify your Gmail")
             
             return redirect('register')
+        elif form.has_error(email) and user.is_active==False : 
+
+
+
         else : 
-            print(form.errors)
+            print(form.errors.as_json)
             
             return render(request,"account/register.html",context)
 
@@ -69,7 +100,27 @@ def logout(request):
         pass
 
 
+def activate(request,uidb64,token):
+    try : 
+        uid = urlsafe_base64_decode( uidb64).decode()
+        user=CustomeUser._default_manager.get(pk=uid)
+        print("here is user")
+        print(user)
+    except :
+        print("Failure")
+        user=None
+    if user is not None and default_token_generator.check_token(user,token) :
+        user.is_active=True
+        user.save() 
+        messages.success(request, "Cangrats your account is activated")
+        return redirect("login")
+    else : 
+        messages.error(request,"invalid activation link")
+        return redirect("register")
+    
 
+    return HttpResponse("Ok")
+    pass
 
 
 # class Login(View):

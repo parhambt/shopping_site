@@ -8,6 +8,7 @@ class CustomeUserManager(BaseUserManager)  :
             raise ValueError('user must have email')
         if not email : 
             raise ValueError('user must have email')
+        
         user=self.model(
             email=self.normalize_email(email),
             username=username
@@ -16,7 +17,7 @@ class CustomeUserManager(BaseUserManager)  :
         user.save(using=self._db)
         return user
     def create_superuser(self,username,email,password=None)  :
-
+        
         superuser=self.create_user(username=username,email=self.normalize_email(email),password=password)
         superuser.is_admin=True
         superuser.is_staff=True
@@ -24,6 +25,7 @@ class CustomeUserManager(BaseUserManager)  :
         superuser.is_active=True
         superuser.save(using=self._db)
         return superuser
+
     
 
 
@@ -47,7 +49,7 @@ class CustomeUser(AbstractBaseUser):
     last_login=models.DateTimeField(auto_now=True)
 
 
-    is_active=models.BooleanField(default=True)
+    is_active=models.BooleanField(default=False)
     is_admin=models.BooleanField(default=False)
     is_superuser=models.BooleanField(default=False)
     is_staff=models.BooleanField(default=False)
