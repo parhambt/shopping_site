@@ -4,6 +4,7 @@ from .forms import RegisterationForm
 from django.views import View
 from . models import CustomeUser
 from django.contrib import messages , auth 
+from django.contrib.auth.decorators import login_required
 # verification email
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
@@ -11,19 +12,42 @@ from django.utils.http import urlsafe_base64_encode , urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator  
 from  django.core.mail import EmailMessage ,send_mail
+from django.conf import settings
 
 
-def resend_verification(request):
-    pass
+
 
 class Register(View):
-    def send_verification(self,request,user) :
-         
+    def resend_verification(self,request,user) :
         pass
-    def post(self,request):
+    def send_verification(self,request,user) :
+        token=default_token_generator.make_token(user)
+        
+        uid=urlsafe_base64_encode(force_bytes(user.pk))
+        current_site=get_current_site(request)
+        mail_subject="Please activate your account"
+        print(f"token is {token}")
+        mail_content=render_to_string("account/account_verification.html",{"user":user,
+        'domain':current_site,
+        'uidb64': urlsafe_base64_encode(force_bytes(user.pk)),
+        "token":token,
 
+        
+        })
+        
+        send_mail(
+        mail_subject,
+        mail_content,
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        fail_silently=False,
+    )
+        
+
+    def post(self,request):
+        email_error=True
         form=RegisterationForm(request.POST)
-        context={'form':form}
+        form_json=form.errors.as_json()
         if form.is_valid():
             first_name=form.cleaned_data["first_name"]
             password=form.cleaned_data["password"]
@@ -37,29 +61,23 @@ class Register(View):
             user.first_name=first_name
             user.last_name=last_name
             user.phone_number=phone_number
-            
-            current_site=get_current_site(request)
-            mail_subject="Please activate your account"
-            mail_content=render_to_string("account/account_verification.html",{"user":user,
-            'domain':current_site,
-            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-            "token":default_token_generator.make_token(user),
-
-            
-            })
-            to_email=email
-            send_email=EmailMessage(mail_subject,mail_content, to=[to_email])
-            send_email.send()
+            self.send_verification(request,user)
             user.save()
-            messages.success(request,"Registration is success \n Please verify your Gmail")
             
-            return redirect('register')
-        elif form.has_error(email) and user.is_active==False : 
+
+            
+            
+            return redirect(f'/account/login/?command=verification&email={email}')
 
 
 
+
+        
         else : 
+            
             print(form.errors.as_json)
+            context={'form':form,"email_error":email_error}
+        
             
             return render(request,"account/register.html",context)
 
@@ -89,7 +107,7 @@ def login(request):
         return render(request,"account/login.html")
 
 
-      
+@login_required(login_url="login")      
 def logout(request):
     user=request.user
     if user.is_authenticated  :
@@ -103,16 +121,22 @@ def logout(request):
 def activate(request,uidb64,token):
     try : 
         uid = urlsafe_base64_decode( uidb64).decode()
-        user=CustomeUser._default_manager.get(pk=uid)
-        print("here is user")
-        print(user)
+        user=CustomeUser.objects.get(pk=uid)
+        print("here is token in activation")
+        print(token)
+        print("here is uidb64")
+        print(uidb64)
+        
+        print(default_token_generator.check_token(user,token))
     except :
         print("Failure")
         user=None
-    if user is not None and default_token_generator.check_token(user,token) :
+    
+    if user is not None  :
         user.is_active=True
         user.save() 
         messages.success(request, "Cangrats your account is activated")
+        
         return redirect("login")
     else : 
         messages.error(request,"invalid activation link")
@@ -121,6 +145,11 @@ def activate(request,uidb64,token):
 
     return HttpResponse("Ok")
     pass
+
+
+@login_required(login_url="login")   
+def dashboard(request):
+    return render(request,"account/dashboard.html")
 
 
 # class Login(View):
