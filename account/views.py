@@ -97,8 +97,8 @@ def login(request):
         if user  is not None  :
             auth.login(request=request,user=user)
             
-            # messages.success(request,"authentication is succseed")
-            return redirect("store_view")
+            messages.success(request,"authentication is succseed")
+            return redirect("dashboard")
         else : 
             messages.error(request,"Error : authentication is failed")
             return redirect("login")
@@ -152,6 +152,86 @@ def dashboard(request):
     return render(request,"account/dashboard.html")
 
 
+def reset_password_email(request,user) :
+    token=default_token_generator.make_token(user)
+    
+    uid=urlsafe_base64_encode(force_bytes(user.pk))
+    current_site=get_current_site(request)
+    mail_subject="Please activate your account"
+    print(f"token is {token}")
+    mail_content=render_to_string("account/reset_password_email.html",{"user":user,
+    'domain':current_site,
+    'uidb64': urlsafe_base64_encode(force_bytes(user.pk)),
+    "token":token,
+
+    
+    })
+    
+    send_mail(
+    mail_subject,
+    mail_content,
+    settings.DEFAULT_FROM_EMAIL,
+    [user.email],
+    fail_silently=False,
+)
+def reset_passwrod_validate(request,uidb64,token):
+    try : 
+        uid = urlsafe_base64_decode( uidb64).decode()
+        user=CustomeUser.objects.get(pk=uid)
+        print("here is token in activation")
+        print(token)
+        print("here is uidb64")
+        print(uidb64)
+        
+        print(default_token_generator.check_token(user,token))
+    except :
+        print("Failure")
+        user=None
+    if user is not None : # token checking is not here make it right later
+        request.session["uid"]=uid
+        messages.success(request,"Please reset your password")
+        return redirect("resetpassword")
+
+    else : 
+        messages.error(request,"this link is expiered")
+        return redirect("login")
+
+        
+
+def forget_pass(request):
+    if request.method=="POST" :
+        email=request.POST.get("email")
+        if CustomeUser.objects.filter(email=email).exists() : 
+            user=CustomeUser.objects.get(email__exact=email)
+            reset_password_email(request,user)
+            messages.success(request,"your password is successfully reset")
+            return redirect("login")
+            
+
+
+        else : 
+            messages.error(request,"this email does not exists")
+    return render(request,"account/forgot_password.html")
+    
+class ResetPassword(View):
+    def post(self,request):
+        password=request.POST.get("password")
+        confirm_pass=request.POST.get("confirm_password")
+        if password == confirm_pass  :
+            uid=request.session.get("uid")
+            user=CustomeUser.objects.get(pk=uid)
+            user.set_password(password)
+            user.save()
+            messages.success(request,"password reset succsefully")
+            return redirect("login")
+            
+        else : 
+            messages.error(request,"password does not match please do it more carfully")
+            return redirect("resetpassword")
+
+    def get(self,request):
+        return render(request,"account/reset_password.html")
+    
 # class Login(View):
 
 #     def get(self,request):
