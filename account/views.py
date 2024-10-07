@@ -5,6 +5,9 @@ from django.views import View
 from . models import CustomeUser
 from django.contrib import messages , auth 
 from django.contrib.auth.decorators import login_required
+from cart.views import cart_id
+from cart.models import Cart , CartItem
+import requests
 # verification email
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
@@ -90,20 +93,55 @@ class Register(View):
 
     
 def login(request):
+    
     if request.method=="POST":
         email=request.POST.get('email')
         password=request.POST.get('password')    
         user=auth.authenticate(request=request,email=email,password=password)
+        
+        
         if user  is not None  :
+            try : # bring cart items to the real cart
+                cart=Cart.objects.get(cart_id=cart_id(request))
+                is_cart_items=CartItem.objects.filter(cart=cart).exists()
+                if is_cart_items : 
+                    cart_items=CartItem.objects.filter(cart=cart)
+                    for cart_item in cart_items : 
+                        filter_item=CartItem.objects.filter(user=user,product=cart_item.product,json_variation=cart_item.json_variation).exists()
+                        if filter_item : 
+                            cart_item_quantity=cart_item.quantity
+                            item=CartItem.objects.get(user=user,product=cart_item.product)
+                            item.quantity += cart_item_quantity
+                            item.save()
+                        else : 
+                            cart_item.user=user
+                            cart_item.cart = None 
+                            cart_item.save()
+
+
+            except : 
+                pass
+
             auth.login(request=request,user=user)
             
             messages.success(request,"authentication is succseed")
-            return redirect("dashboard")
+            url=request.META.get("HTTP_REFERER")
+            try : 
+                query=requests.utils.urlparse(url).query
+                params=dict(x.split("=") for x in query.split('&'))
+                if "next" in params : 
+                    next_page=params.get('next')
+                    print(next_page)
+                    return redirect(next_page)
+            except :
+            
+                return redirect("dashboard")
         else : 
             messages.error(request,"Error : authentication is failed")
             return redirect("login")
     
     elif request.method == "GET" : 
+        
         return render(request,"account/login.html")
 
 
