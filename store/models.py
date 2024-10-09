@@ -1,6 +1,8 @@
 from django.db import models
 from category.models import Category
 from django.urls import reverse
+from account.models import CustomeUser
+from django.db.models import Avg
 # Create your models here.
 class Color(models.Model):
     color=models.CharField(max_length=20,unique=True)
@@ -43,6 +45,29 @@ class Product(models.Model):
     def get_link_single_product(self):
 
         return reverse("info_product",kwargs={"info_product_slug":self.slug , "slug_category":self.category.slug})
+    def average_review(self):
+
+        reviews=ReviewRaiting.objects.filter(product=self,status=True).aggregate(average=Avg("rating", default=0))
+        avg=  float(reviews["average"])
+        return avg
+        
+
+        
+
+    
+
+class ReviewRaiting(models.Model):
+    product=models.ForeignKey(Product, on_delete=models.CASCADE)
+    user= models.ForeignKey(CustomeUser,on_delete=models.CASCADE)
+    subject=models.CharField(max_length=50,blank=True)
+    review=models.TextField(max_length=256 , blank=True)
+    rating=models.FloatField()
+    ip=models.CharField(max_length=20 ,blank=True , null=True)
+    status=models.BooleanField(default=True)
+    created_date=models.DateTimeField(auto_now_add=True)
+    updated_date=models.DateTimeField(auto_now=True)
+    def __str__(self):
+        return self.subject
     
 
 
