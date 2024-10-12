@@ -1,8 +1,8 @@
-from django.shortcuts import render ,redirect
+from django.shortcuts import render ,redirect , get_object_or_404
 from django.http import HttpResponse 
-from .forms import RegisterationForm
+from .forms import RegisterationForm ,UserForm, ProfileForm
 from django.views import View
-from . models import CustomeUser
+from . models import CustomeUser ,UserProfile
 from django.contrib import messages , auth 
 from django.contrib.auth.decorators import login_required
 from cart.views import cart_id
@@ -187,7 +187,14 @@ def activate(request,uidb64,token):
 
 @login_required(login_url="login")   
 def dashboard(request):
-    return render(request,"account/dashboard.html")
+    user_profile=UserProfile.objects.get(user=request.user)
+    try : 
+        image = user_profile.profile_picture
+        context={"user_profile":user_profile,"image":image}
+    except:
+        image=False
+        context={"user_profile":user_profile,"image":image}
+    return render(request,"account/dashboard.html",context)
 
 
 def reset_password_email(request,user) :
@@ -250,7 +257,7 @@ def forget_pass(request):
         else : 
             messages.error(request,"this email does not exists")
     return render(request,"account/forgot_password.html")
-    
+   
 class ResetPassword(View):
     def post(self,request):
         password=request.POST.get("password")
@@ -269,7 +276,56 @@ class ResetPassword(View):
 
     def get(self,request):
         return render(request,"account/reset_password.html")
-    
+@login_required(login_url="login")
+def edit_profile(request):
+    user_profile = get_object_or_404(UserProfile , user=request.user)
+    if request.method == "POST" : 
+        user_form=UserForm(request.POST,instance=request.user)
+        profile_form=ProfileForm(request.POST , request.FILES , instance=user_profile)
+        if user_form.is_valid() and profile_form.is_valid() : 
+            user_form.save()
+            profile_form.save()
+            messages.success(request, "you profile has been updated")
+            return redirect("edit_profile")
+    else : 
+        user_form=UserForm(instance=request.user)
+        profile_form=ProfileForm(instance=user_profile)
+    status=False
+    try :
+        x=user_profile.profile_picture.url
+        status=True
+    except : 
+        status=False
+    context={"user_form":user_form,"profile_form":profile_form,"user_profile":user_profile,"status":status }
+
+
+    return render(request,"account/edit_profile.html",context)
+    pass
+@login_required(login_url="login")
+def change_password(request):
+    if request.method == "POST":
+        curent_pass=request.POST.get("curent_password")
+        new_pass=request.POST.get("new_password")
+        confirm_pass=request.POST.get("new_password_1")
+        user=CustomeUser.objects.get(username__exact=request.user.username)
+        if new_pass== confirm_pass : 
+            is_success=user.check_password(curent_pass)
+            if is_success : 
+                user.set_password(new_pass)
+                user.save()
+                messages.success(request, "Password updated successfully")
+                auth.logout(request)
+                return redirect("login")
+            else : 
+                messages.error(request ,"password is not correct")
+                return redirect("change_password")
+        else : 
+            messages.error(request ,"passwords does not match")
+            return redirect("change_password")
+    else : 
+
+
+        return render(request , "account/change_password.html")
 # class Login(View):
 
 #     def get(self,request):

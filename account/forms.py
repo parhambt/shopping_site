@@ -1,5 +1,5 @@
 from django import forms
-from .models import CustomeUser
+from .models import CustomeUser ,UserProfile
 
 
 class RegisterationForm(forms.ModelForm):
@@ -26,3 +26,21 @@ class RegisterationForm(forms.ModelForm):
         confirm_password=self.cleaned_data["confirm_password"]
         if password != confirm_password : 
             raise forms.ValidationError("password does not match")
+
+class UserForm(forms.ModelForm):
+    class Meta : 
+        model=CustomeUser
+        fields=["first_name","last_name","phone_number"]
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        for field in self.fields : 
+            self.fields[field].widget.attrs["class"] = 'form-control'
+
+class ProfileForm(forms.ModelForm):
+    class Meta : 
+        model=UserProfile
+        fields=["address_line_1","address_line_2","state","country","profile_picture","city"]
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        for field in self.fields : 
+            self.fields[field].widget.attrs["class"] = 'form-control'

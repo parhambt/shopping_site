@@ -73,8 +73,19 @@ class CustomeUser(AbstractBaseUser):
 
 
 
-    
-        
+class UserProfile(models.Model):
+    user=models.OneToOneField(CustomeUser,on_delete=models.CASCADE)  # requierd
+    address_line_1=models.CharField(max_length=100,blank=True , null=True)
+    address_line_2=models.CharField(max_length=100,blank=True , null=True)
+    profile_picture=models.ImageField(blank=True , null=True ,upload_to="phtoes/user_profile/" , default="images/avatars/profile_avatar")  
+    city=models.CharField(max_length=40,blank=True , null=True)
+    country=models.CharField(max_length=40 , blank=True)
+    state=models.CharField(max_length=40,blank=True , null=True)
+    def __str__(self):
+        return self.user.first_name
+    def full_address(self):
+        return f"{self.address_line_1} {self.address_line_2}"
+
 
 
 

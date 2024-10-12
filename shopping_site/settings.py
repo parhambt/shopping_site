@@ -33,6 +33,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -40,12 +41,13 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "category",
-    "account",
+    # "account",
     "store",
     "cart",
     "rest_framework",
     "api",
     "orders",
+    "account.apps.AccountConfig",
     
     
     

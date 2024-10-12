@@ -10,6 +10,8 @@ urlpatterns=[ path("register/",views.Register.as_view(),name="register"),
              path("forgotpassword/",views.forget_pass,name="forgotpassword"),
              path("reset_passwrod_validate/<uidb64>/<token>/",views.reset_passwrod_validate , name='reset_passwrod_validate'),
              path("resetpassword/",views.ResetPassword.as_view(),name="resetpassword"),
+             path("edit_profile/" , views.edit_profile , name="edit_profile"),
+             path("change_password/",views.change_password , name="change_password"),
 
 
 
