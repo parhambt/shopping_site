@@ -69,5 +69,14 @@ class ReviewRaiting(models.Model):
     def __str__(self):
         return self.subject
     
+from django.utils.safestring import mark_safe
 
+class ProductGallery(models.Model):
+    product=models.ForeignKey(Product, on_delete=models.CASCADE , default=None )
+    image=models.ImageField(upload_to="phtoes/gallery" ,)
+    def __str__(self):
+        return str(self.product.product_name)
+    
+
+    
 

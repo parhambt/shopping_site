@@ -12,7 +12,9 @@ class CustomeUserAdomin(admin.ModelAdmin):
 class UserProfileAdmin(admin.ModelAdmin):
     def thumbnail(self,object):
         return format_html(f'<img src={object.profile_picture.url} width="30" style="border-radius:50%;">')
+    
     thumbnail.short_description = "Profile_Picture"
-    list_display=["user","city","state","country"]
+    list_display=["user","city","state","country","thumbnail"]
+    
 admin.site.register(CustomeUser,CustomeUserAdomin)
 admin.site.register(UserProfile,UserProfileAdmin)

@@ -1,5 +1,5 @@
 from django.shortcuts import render,get_object_or_404 , redirect
-from .models import Product
+from .models import Product , ProductGallery
 from category.models import Category
 from .models import Product ,ReviewRaiting
 from cart.models import Cart , CartItem
@@ -48,7 +48,8 @@ def info_product(request,info_product_slug,slug_category):
         raise e 
 
     reviews=ReviewRaiting.objects.filter(product=single_product , status=True)
-    context={"single_product":single_product,"is_in_cart_already":is_in_cart_already,"reviews":reviews,"len_reviews":len(reviews)}
+    product_gallery=ProductGallery.objects.filter(product=single_product)
+    context={"single_product":single_product,"is_in_cart_already":is_in_cart_already,"reviews":reviews,"len_reviews":len(reviews),"product_gallery":product_gallery}
     print(len(reviews))
     # for color in single_product.variation.colors.all(): 
     #     print(color)
